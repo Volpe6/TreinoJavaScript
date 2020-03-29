@@ -6,6 +6,7 @@ Nodo = function(x, y, raio, desenho) {
     this.raio       = raio;
     this.id         = "";
     this.sucessores = [];
+    this.heuristica = 0;
     this.desenho    = desenho;
 
     this.atualiza =  function(x, y) {
@@ -24,6 +25,20 @@ Nodo = function(x, y, raio, desenho) {
         for(let i = 0; i < this.sucessores.length; i++) {
             var nodo = this.sucessores[i];
             this.desenho.linha(this.x, this.y, nodo.getX(), nodo.getY(), "black");
+
+            //mostra a distancia entre nodos
+            if(true) {
+                let x  = nodo.getX() - this.x;
+                let y  = nodo.getY() - this.y;
+
+                let distanciaNodos = Math.round(Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2))));
+
+                //geometria analitica para determinar as coordenadas do ponto médio
+                let xPontoMedio = (nodo.getX() + this.x)/2;
+                let YPontoMedio = (nodo.getY() + this.y)/2;
+
+                this.desenho.texto(xPontoMedio, YPontoMedio, distanciaNodos, "black", 15);
+            }
         }
     }
 

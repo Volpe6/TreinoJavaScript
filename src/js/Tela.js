@@ -3,11 +3,12 @@ var TELA = TELA || {};
 TELA = {
     observadores: [],
     dado:{},
+    tipoBusca: "",
     autualizaDados: function(dado) {
         this.dado = dado;
     },
     busca: async function(elemInical, elemMeta) {
-        const solucao = await BUSCA.buscaBidirecional(elemInical, elemMeta);
+        const solucao = await BUSCA[this.tipoBusca](elemInical, elemMeta);
         this.autualizaDados(solucao);
         this.notificaNodosSolucao();
     },

@@ -12,9 +12,28 @@
     <body>
         <div id="main" class="container-fluid">
             <div class="row-0 container-linha">
-                <h1 class="row-0">Teste</h1>
-                <input class="input" type="text" placeholder="velocidade de execução" />
-                <input class="input" type="button"  value="executar " />
+                <div>
+                    <div>
+                        <label for="nd-origem">Nodo origem</label>
+                        <input style="width: 2em"  maxlength="1" type="text" name="nd-origem" id="nd-origem" />
+                    </div>
+                    <div>
+                        <label for="nd-origem">Nodo Destino</label>
+                        <input style="width: 2em" maxlength="1" type="text" name="nd-destino" id="nd-destino" />
+                    </div>
+                </div>
+                <input id="inpt-exe" class="input" type="text" placeholder="velocidade de execução" />
+                <input id="btn-executar" class="input" type="button" value="executar " />
+                <input id="btn-limpar" class="input" type="button" value="Limpar " />
+                <select id="select-busca">
+                    <option value="" selected></option>
+                    <option value="buscaLargura" >Busca em largura</option>
+                    <option value="buscaProfundidadeIterativa">Busca em prufundidade</option>
+                    <option value="buscaBidirecional">Busca bidirecional</option>
+                    <option value="buscaGulosa">Busca Gulosa</option>
+                    <option value="buscaEstrela">Busca Estrela</option>
+                </select>
+                <input id="btn-carrega-grafo-padrao" class="input" type="button" value="Carrega Grafo Padrão" />
             </div>
             <div class="grid-container-principal row">
                 <aside>
@@ -27,10 +46,10 @@
                 </aside>
                 <div id="canvas" class="scroll-0"></div>
                 <aside id="tela-esquerda" class="grid-container sem-padding">
-                    <div id="item2" class="container-fluid">
+                    <!-- <div id="item2" class="container-fluid">
                         <h4>Arvore gerada na busca</h4>
                         <div class="row scroll"></div>
-                    </div>
+                    </div> -->
                     <div id="item1" class="container-linha">
                         <div class="caixa">
                             <h4>Nodos Visitados</h4>
@@ -51,7 +70,6 @@
             </div>
         </div>
         <script src="./js/DesenhoJS.js"></script>
-        <script src="./js/UtilJs.js"></script>
         <script src="./js/NodoJs.js"></script>
         <script src="./js/GrafoJs.js"></script>
         <script src="./js/ArvoreJs.js"></script>
@@ -59,37 +77,88 @@
         <script src="./js/ControllerArvoreGrafoJs.js"></script>
         <script src="./js/Busca.js"></script>
         <script src="./js/Tela.js"></script>
+        <!------------------UTIL---------------------->
+        <script src="./js/util/UtilJs.js"></script>
+        <script src="./js/util/LinkedPositionalList.js"></script>
+        <script src="./js/util/SortedPriorityQueue.js"></script>
         <script>
 
-            var btnExe = document.querySelectorAll('.input');
-            btnExe[1].addEventListener('click', executar);
+            var tipoBusca = "";
+
+            var select = document.querySelector('#select-busca');
+            select.addEventListener('change', function(e) {
+                tipoBusca = select.value;
+            });
+
+            var bttGrafo = document.querySelector('#btn-carrega-grafo-padrao');
+            bttGrafo.addEventListener('click', function(e) {
+                TELA.notificaLimpaTela();
+                canvasPr.controller.reset();
+                montaGrafo();
+            });
+
+            var btnLimpar = document.querySelector('#btn-limpar');
+            btnLimpar.addEventListener('click', function(e) {
+                TELA.notificaLimpaTela();
+                canvasPr.controller.reset();
+            });
+
+            var btnExe = document.querySelector('#btn-executar');
+            btnExe.addEventListener('click', executar);
 
             function executar() {
-                TELA.notificaLimpaTela();
-                var inputs = document.querySelectorAll('.input');
-                UTIL.tempo = parseInt(inputs[0].value);
-                inputs[0].value = "";
+                var input   = document.querySelector('#inpt-exe');
+                UTIL.tempo  = parseInt(input.value);
+                input.value = "";
                 busca();
             }
 
-            const canvasPr     = new canvasPrincipal();
-            const canvasSr     = new canvasSecundario();
-            const telaNodosVis = new telaNodosVisitados();
-            const telaNodosSol = new telaNodosSolucao();
-
-            TELA.anexar(canvasPr);
-            TELA.anexar(canvasSr);
-            TELA.anexar(telaNodosVis);
-            TELA.anexar(telaNodosSol);
-
-            async function busca() {
+            async function testeHeuristica() {
                 montaGrafo();
 
-                nodo = canvasPr.controller.grafo.nodos.get("C");
-                nodo1 = canvasPr.controller.grafo.nodos.get("T");
+                meta = canvasPr.controller.grafo.nodos.get("M");
+                canvasPr.controller.defineValorHeuristicoNodos(meta);
 
-                await TELA.busca(nodo, nodo1);
+                canvasPr.controller.imprimeConsoleValorHeuristico();
             }
+
+            async function busca() {
+                TELA.notificaLimpaTela();
+
+                let grafo = canvasPr.controller.grafo.nodos;
+
+                if(grafo.size == 0) {
+                    return;
+                }
+
+                if(tipoBusca == "") {
+                    tipoBusca = 'buscaBidirecional'
+                }
+
+                TELA.tipoBusca = tipoBusca;
+
+                nodoInicial = grafo.get(document.querySelector('#nd-origem').value.toUpperCase());
+                nodoMeta    = grafo.get(document.querySelector('#nd-destino').value.toUpperCase());
+
+                switch(tipoBusca) {
+                    case 'buscaGulosa':
+                    case 'buscaEstrela':
+                        canvasPr.controller.defineValorHeuristicoNodos(nodoMeta);
+                        break;
+                }
+
+                await TELA.busca(nodoInicial, nodoMeta);
+            }
+
+            const canvasPr     = new canvasPrincipal();
+            // const canvasSr     = new canvasSecundario();
+            const telaNodosVis = new telaNodosVisitados();
+            const telaNodosSol = new telaNodosSolucao();
+            
+            TELA.anexar(canvasPr);
+            // TELA.anexar(canvasSr);
+            TELA.anexar(telaNodosVis);
+            TELA.anexar(telaNodosSol);
 
             function canvasSecundario() {
                 this.limpo = function() {
@@ -116,9 +185,6 @@
                 var canvas          = document.createElement('canvas');
                 canvas.width        = 4000;
                 canvas.height       = 400;
-
-                console.log(canvas.width);
-                console.log(canvas.height);
                 
                 var ctx = canvas.getContext('2d');
                 divCan.appendChild(canvas);
@@ -217,7 +283,11 @@
 
             function canvasPrincipal() {
                 this.limpo = function() {
-                    controller.reset();
+                    //se não fizer assim depois que executa a busca novamente as linhas ficam
+                    //vermelhaa, nao entendi o porque
+                    controller.grafo.desenhaNodos();
+                    controller.clear();
+                    controller.grafo.desenhaNodos();
                 }
                 this.nodosSolucao   = function(dado) {
                     controller.destacaoCaminhoSolucao(dado);

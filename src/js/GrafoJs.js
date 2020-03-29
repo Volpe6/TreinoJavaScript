@@ -42,7 +42,7 @@ Grafo = function() {
     }
 
     this.reset = function() {
-        nodos = new Map();
+        this.nodos = new Map();
     }
 
 }

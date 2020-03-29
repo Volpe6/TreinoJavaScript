@@ -63,10 +63,10 @@ ControllerGrafo  = function(canvas) {
             if(nodoConexao == null || control.nodoSelecionado == null) {
                 return;
             }
-
+            
             control.nodoSelecionado.addSucessor(nodoConexao);
             nodoConexao.addSucessor(control.nodoSelecionado);
-
+            
             control.limpaNodoSelecionado();
             control.clear();
             control.grafo.desenhaNodos();
@@ -121,7 +121,7 @@ ControllerGrafo  = function(canvas) {
     }
 
     this.reset = function() {
-        this.grafo.desenhaNodos();
+        this.letras  = 97;
         this.clear();
         this.grafo.reset();
     }
@@ -130,4 +130,28 @@ ControllerGrafo  = function(canvas) {
         this.desenho.context.clearRect(0, 0, canvas.width, canvas.height);
     }
 
+    this.defineValorHeuristicoNodos = function(meta) {
+        let nodos = this.grafo.getNodos();
+        for(let [key, value] of nodos) {
+            value.heuristica = calculoHeuristico({
+                x: value.getX(),
+                y: value.getY()
+            });
+        }
+
+        //distancia em linha reta do nodo atual ate o nodo meta
+        function calculoHeuristico(elem) {
+            let x = meta.getX() - elem.x;
+            let y = meta.getY() - elem.y;
+
+            return Math.round(Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2))));
+        }
+    }
+
+    this.imprimeConsoleValorHeuristico = function() {
+        let nodos = this.grafo.getNodos();
+        for(let[key, value] of nodos) {
+            console.log(value.id + ": " + value.heuristica);
+        }
+    }
 }

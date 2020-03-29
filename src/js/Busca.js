@@ -1,6 +1,8 @@
 var BUSCA = BUSCA || {};
 
 BUSCA = {
+    /*======================BUSCAS-CEGAS==============================*/
+    /* o modo como foi implementado, torna possivel que entre em loop*/
     buscaLargura : async function(elemInicial, elemMeta) {
 
         return await busca();
@@ -204,7 +206,82 @@ BUSCA = {
 
         }
 
-    } 
+    },
+    /*=======================BUSCAS-INFORMADAS==============================*/ 
+     /* o modo como foi implementado, torna possivel que entre em loop*/
+    buscaGulosa: async function(elemInicial, elemMeta) {
+        
+        return await busca();
+
+        async function busca() {
+            let abertos = new SortedPriorityQueue();
+            abertos.inserir(elemInicial.heuristica, new BUSCA.funcoes.node(elemInicial, null));
+
+            while(!abertos.isEmpty()) {
+                await UTIL.sleepPromise();
+                nodoAtual = abertos.removeMin().getValue();
+
+                BUSCA.funcoes.notificaVisitados(nodoAtual);
+                if(BUSCA.funcoes.meta(nodoAtual, elemMeta)) {
+                    // BUSCA.funcoes.notificaAbertos(abertos);
+                    return nodoAtual;
+                }
+
+                let sucessores = BUSCA.funcoes.sucessores(nodoAtual);
+                for(let i = 0; i < sucessores.length; i++) {
+                    let sucessor = sucessores[i];
+                    abertos.inserir(sucessor.heuristica, sucessor);
+                }
+            }
+            return null;
+        }
+    },
+    //Revisar
+    buscaEstrela: async function(elemInicial, elemMeta) {
+
+        return await busca();
+
+        async function busca() {
+            let abertos = new SortedPriorityQueue();
+            abertos.inserir(elemInicial.heuristica + getDistanciaEntreNodos(elemInicial, elemInicial), elemInicial);
+
+            while(!abertos.isEmpty()) {
+                await UTIL.sleepPromise();
+                nodoAtual = abertos.removeMin().getValue();
+                
+                BUSCA.funcoes.notificaVisitados(nodoAtual);
+                if(BUSCA.funcoes.meta(nodoAtual, elemMeta)) {
+                    // BUSCA.funcoes.notificaAbertos(abertos);
+                    return nodoAtual;
+                }
+
+                let sucessores = BUSCA.funcoes.sucessores(nodoAtual);
+                for(let i = 0; i < sucessores.length; i++) {
+                    let sucessor = sucessores[i];
+                    let soma     = 0;//g(n) custo do caminho do nó inicial até n
+
+                    let currentNode = sucessor;
+                    while(currentNode != null) {
+                        if(currentNode.pai == null) {
+                            break;
+                        }
+                        soma += getDistanciaEntreNodos(currentNode.pai, currentNode);
+                        currentNode = currentNode.pai;
+                    }
+                    
+                    abertos.inserir(sucessor.heuristica + soma, sucessor);
+                }
+                // abertos.imprimeElementos();
+            }
+        }
+
+        function getDistanciaEntreNodos(nodoA, nodoB) {
+            let x = nodoB.x - nodoA.x;
+            let y = nodoB.y - nodoA.y;
+
+            return Math.round(Math.sqrt((Math.pow(x, 2) + Math.pow(y, 2))));
+        }
+    }
 }
 
 BUSCA.funcoes = {
@@ -216,6 +293,7 @@ BUSCA.funcoes = {
         this.y          = elem.getY();
         this.raio       = elem.raio;
         this.nivel      = nivel;
+        this.heuristica = elem.heuristica;
     },
     sucessores: function(elem) {
         if(typeof elem.sucessores == 'undefined') {
